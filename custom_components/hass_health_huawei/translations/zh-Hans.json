@@ -1,0 +1,116 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "账号区域",
+        "description": "华为帐号（HUAWEI ID）只属于一个云服务区域，令牌对必须由该帐号所在的云服务签发。\n\n- **中国大陆** —— 帐号是在中国大陆销售的设备上创建的，或通过 cloud.huawei.com.cn 登录。\n- **国际版** —— 其他所有情况：欧洲、俄罗斯、亚太，以及在中国大陆以外创建的任何帐号。\n\n如果下一步登录提示帐号不存在，请返回本步骤并选择另一个区域。",
+        "data": {
+          "region": "帐号所在区域"
+        }
+      },
+      "login": {
+        "title": "在浏览器中登录 HUAWEI ID",
+        "description": "无需打开华为运动健康 App：在浏览器中完成一次普通的 HUAWEI ID 登录后，云端就会签发令牌对。只有授权这一步需要手动完成，其余全部由集成自动处理。\n\n**第 1 步：在普通浏览器中打开登录页面**（Chrome、Firefox 等均可）：\n\n[{authorize_url}]({authorize_url})\n\n**第 2 步：把浏览器切换到移动设备模式。** 授权页上的“允许”按钮只响应触摸（touch），鼠标点击无效。\n\n1. 按 **F12**（或 **Ctrl+Shift+I**，macOS 为 **Cmd+Option+I**）打开开发者工具。\n2. 按 **Ctrl+Shift+M**（macOS 为 **Cmd+Shift+M**）—— 即开发者工具左上角的“切换设备工具栏”按钮。\n3. 在出现的工具条中选择一台设备（如 **iPhone 12 Pro** 或 **Pixel 7**），然后点击同一工具条上的 **重新加载**（圆形箭头）。\n4. 页面会以移动版式重新加载：滚到底部并点击**允许**——此时光标的作用等同于手指。\n\n**第 3 步：回到这里**，在下一步粘贴浏览器最终停下的地址。\n\n完整图文说明见：{docs}"
+      },
+      "code": {
+        "title": "粘贴包含 code 的地址",
+        "description": "**code 在哪里。** 点击“允许”后，浏览器会尝试打开形如 `hms://redirect_url?code=...` 的链接并失败：这台电脑上没有应用注册该协议。Chrome 会在控制台中如实报告，需要的正是这一行：\n\n```\nFailed to launch 'hms://redirect_url?code=EQFEAQNaOARz0K1p%2BmR7sT4uVwXyZ0...%3D%3D&state=9f2c1ab7' because the scheme does not have a registered handler.\n```\n\n1. 在开发者工具中打开 **Console（控制台）** 标签（F12 → Console）。\n2. 找到以 `Failed to launch 'hms://redirect_url?code=` 开头的那一行。\n3. 整行复制——连同 `Failed to launch`、`because the scheme...` 等文字一起复制也可以，集成会自动剔除多余内容。地址栏中的 `hms://redirect_url?code=...` 地址同样可用。\n4. 粘贴到下方输入框，点击**提交**。\n\ncode 是一次性的，且只有几分钟有效期。如果被拒绝，请回到第 1 步重新打开登录页面并重复整个流程。\n\n**新的登录链接**（code 被拒后会重新生成）：[{authorize_url}]({authorize_url})"
+      },
+      "reauth_confirm": {
+        "title": "需要重新登录",
+        "description": "账号 **{account}** 的会话已无法刷新：refresh token 已过期（华为签发的有效期为 180 天）或因退出登录而被吊销。\n\n无需删除任何内容：在浏览器中重新登录，集成会把新令牌写入同一条配置——历史数据和传感器设置保持不变。\n\n**第 1 步：** 打开登录页面：[{authorize_url}]({authorize_url})\n\n**第 2 步：** 在开发者工具中开启移动设备模式（**F12**，然后 **Ctrl+Shift+M**），否则“允许”按钮不响应鼠标。\n\n**第 3 步：** 在开发者工具 → Console 中复制 `Failed to launch 'hms://redirect_url?code=...'` 那一行，并在下一步粘贴。\n\n详细说明：{docs}"
+      }
+    },
+    "abort": {
+      "already_configured": "该 HUAWEI ID 账号已配置。",
+      "reauth_successful": "完成：令牌已刷新，账号已重新加载。",
+      "unsupported_import": "不支持 YAML 配置：请通过“集成”添加账号。"
+    },
+    "error": {
+      "no_code": "输入内容中没有 code：请粘贴浏览器控制台中形如 hms://redirect_url?code=... 的地址。",
+      "invalid_code": "华为拒绝了该 code：已被使用、已过期，或登录的是其他账号。请重新打开登录页面并重试。",
+      "cannot_connect": "无法连接华为云。请检查网络后重试。",
+      "unknown": "未知错误。详情请查看 Home Assistant 日志。"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "账号设置",
+        "description": "每个账号单独配置。修改立即生效，无需重启 Home Assistant。",
+        "data": {
+          "update_interval": "轮询间隔（分钟）",
+          "history_days": "保留多少天的日数据",
+          "workout_days": "回溯多少天查找运动记录",
+          "enable_workouts": "轮询运动记录（getSportsDataByTime）",
+          "enable_health_metrics": "轮询心率、睡眠和压力（getHealthStat）",
+          "device_code": "单个设备的 deviceCode（0 = 整个账号）"
+        },
+        "data_description": {
+          "update_interval": "低于 5 分钟没有意义：App 云端只有在手表或手机同步时才会更新。",
+          "history_days": "影响日传感器；30 天以内仍只需一次请求。",
+          "workout_days": "运动记录按 10 天窗口读取（云端硬性限制），30 天即三次请求。",
+          "device_code": "/profile/device/getBindDevice 可列出 deviceCode。填入手表的 deviceCode 后，日统计仅限该设备。",
+          "enable_workouts": "如果从不记录运动，可关闭：能省掉最慢的一次请求。",
+          "enable_health_metrics": "如果没有测量心率或睡眠的设备，可关闭。"
+        }
+      }
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "cn": "中国大陆",
+        "global": "国际版（欧洲、俄罗斯、亚太等）"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "steps": { "name": "今日步数" },
+      "distance": { "name": "今日距离" },
+      "calories": { "name": "今日热量" },
+      "activity_duration": { "name": "今日活动时长" },
+      "walking_duration": { "name": "今日步行时长" },
+      "active_hours": { "name": "今日活动小时数" },
+      "moderate_high_intensity_minutes": { "name": "今日中高强度分钟数" },
+      "step_goal": { "name": "步数目标" },
+      "resting_heart_rate": { "name": "静息心率" },
+      "heart_rate": { "name": "心率" },
+      "max_heart_rate": { "name": "今日最高心率" },
+      "min_heart_rate": { "name": "今日最低心率" },
+      "sleep_duration": { "name": "睡眠时长" },
+      "sleep_deep": { "name": "深睡眠" },
+      "sleep_rem": { "name": "快速眼动（REM）" },
+      "sleep_light": { "name": "浅睡眠" },
+      "sleep_awake": { "name": "睡眠中清醒" },
+      "sleep_score": { "name": "睡眠得分" },
+      "sleep_efficiency": { "name": "睡眠效率" },
+      "sleep_hrv": { "name": "睡眠 HRV" },
+      "sleep_spo2": { "name": "睡眠血氧" },
+      "stress": { "name": "压力" },
+      "stress_last": { "name": "压力（最近一次测量）" },
+      "last_activity": {
+        "name": "最近运动",
+        "state": {
+          "stairs": "爬楼",
+          "hill": "登山 / 越野",
+          "cycling": "骑行",
+          "running": "跑步",
+          "walking": "步行",
+          "deep_sleep": "深睡眠",
+          "light_sleep": "浅睡眠",
+          "awake": "清醒",
+          "swimming": "游泳",
+          "other": "其他",
+          "unknown": "未知类型"
+        }
+      },
+      "last_activity_duration": { "name": "最近运动时长" },
+      "last_activity_distance": { "name": "最近运动距离" },
+      "last_activity_calories": { "name": "最近运动热量" },
+      "workouts": { "name": "周期内运动次数" },
+      "relogin_in": { "name": "距需重新登录（天）" }
+    }
+  }
+}

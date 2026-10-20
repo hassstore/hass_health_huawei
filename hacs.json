@@ -1,0 +1,7 @@
+{
+  "name": "Huawei Health",
+  "homeassistant": "2024.12.0",
+  "zip_release": true,
+  "filename": "hass_health_huawei.zip",
+  "render_readme": true
+}

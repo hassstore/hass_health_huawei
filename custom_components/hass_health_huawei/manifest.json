@@ -1,0 +1,14 @@
+{
+  "domain": "hass_health_huawei",
+  "name": "Huawei Health",
+  "codeowners": [
+    "@hassstore"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/hassstore/hass_health_huawei",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/hassstore/hass_health_huawei/issues",
+  "requirements": [],
+  "version": "2.0.0"
+}
