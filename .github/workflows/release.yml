@@ -40,6 +40,14 @@ jobs:
           # manifest.json 必须位于压缩包根目录，否则 HACS 装完 HA 找不到集成。
           unzip -l hass_health_huawei.zip | head -8
           unzip -p hass_health_huawei.zip manifest.json > /dev/null
+          if unzip -l hass_health_huawei.zip | grep -q 'custom_components/'; then
+            echo "FAIL: archive has a nested custom_components/ prefix" >&2
+            exit 1
+          fi
+          if unzip -l hass_health_huawei.zip | grep -q '__pycache__'; then
+            echo "FAIL: archive contains __pycache__" >&2
+            exit 1
+          fi
           echo "OK: manifest.json is at the archive root"
 
       - uses: softprops/action-gh-release@v2

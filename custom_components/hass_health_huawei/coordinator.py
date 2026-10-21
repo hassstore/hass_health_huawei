@@ -14,6 +14,7 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
+from homeassistant.util import dt as dt_util
 
 from .client import (
     HuaweiAuthError,
@@ -46,16 +47,16 @@ class HuaweiHealthData:
     client: HuaweiHealthClient
     tokens: Tokens
     coordinator: HuaweiHealthCoordinator
-    options: dict
 
     def day(self, metric: str, lookback_days: int = 0) -> tuple[str, Any] | None:
         """某个按天指标的最新值，连同它所属的日期。
 
         云端把一夜标记在它结束的那天，并且随着手环同步才逐渐补齐当天数据，
-        所以"今天"为空有几个小时是正常的；前一天才是诚实的读数，而不是"不可用"。
+        所以“今天”为空有几个小时是正常的；前一天才是诚实的读数，而不是“不可用”。
         """
         days = (self.coordinator.data or {}).get("days") or {}
-        offset = date.today()
+        # 用 HA 配置的时区而不是容器的系统时区：云端按用户本地日期归档。
+        offset = dt_util.now().date()
         for _ in range(lookback_days + 1):
             row = days.get(offset.isoformat())
             if row and row.get(metric) is not None:
@@ -104,6 +105,9 @@ class HuaweiHealthCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def _gather(self) -> dict[str, Any]:
         entry = self.config_entry
+        # 云端按用户本地日期归档；executor 里的系统时区通常是 UTC，因此显式传入。
+        today: date = dt_util.now().date()
+        tz = dt_util.DEFAULT_TIME_ZONE
         history = int(entry.options.get(CONF_HISTORY_DAYS) or DEFAULT_HISTORY_DAYS)
         days: dict[str, dict] = {}
         failures: list[str] = []
@@ -126,15 +130,19 @@ class HuaweiHealthCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             for row in rows:
                 days.setdefault(row["date"], {}).update(row)
 
-        run("activity", lambda: self.client.daily_summary(history), merge_daily)
+        run("activity",
+            lambda: self.client.daily_summary(history, today=today, tz=tz),
+            merge_daily)
         if entry.options.get(CONF_ENABLE_HEALTH, True):
-            run("health", lambda: self.client.health_summary(history), merge_health)
+            run("health",
+                lambda: self.client.health_summary(history, today=today, tz=tz),
+                merge_health)
 
         workouts: list[dict] = []
         window_days = int(entry.options.get(CONF_WORKOUT_DAYS) or DEFAULT_WORKOUT_DAYS)
         if entry.options.get(CONF_ENABLE_WORKOUTS, True):
             def fetch_sessions() -> list[dict]:
-                return self.client.sessions(window_days)
+                return self.client.sessions(window_days, today=today)
 
             run("workouts", fetch_sessions, lambda rows: workouts.extend(rows))
 

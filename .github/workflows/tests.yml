@@ -1,0 +1,30 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    name: pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      # 带上与 HA 同版本的家用测试框架（fixtures: hass / MockConfigEntry /
+      # enable_custom_integrations），见 HA 规范 10.3。
+      - name: Install the test harness
+        run: pip install pytest-homeassistant-custom-component
+
+      - name: Run the tests
+        run: pytest -q

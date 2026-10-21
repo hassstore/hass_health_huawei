@@ -1,0 +1,93 @@
+{
+  "entity": {
+    "sensor": {
+      "steps": {
+        "default": "mdi:walk"
+      },
+      "distance": {
+        "default": "mdi:map-marker-distance"
+      },
+      "calories": {
+        "default": "mdi:fire"
+      },
+      "activity_duration": {
+        "default": "mdi:timer-outline"
+      },
+      "walking_duration": {
+        "default": "mdi:shoe-print"
+      },
+      "active_hours": {
+        "default": "mdi:clock-outline"
+      },
+      "moderate_high_intensity_minutes": {
+        "default": "mdi:run-fast"
+      },
+      "step_goal": {
+        "default": "mdi:target-variant"
+      },
+      "resting_heart_rate": {
+        "default": "mdi:heart"
+      },
+      "heart_rate": {
+        "default": "mdi:heart-pulse"
+      },
+      "max_heart_rate": {
+        "default": "mdi:heart-plus"
+      },
+      "min_heart_rate": {
+        "default": "mdi:heart-minus"
+      },
+      "sleep_duration": {
+        "default": "mdi:sleep"
+      },
+      "sleep_deep": {
+        "default": "mdi:weather-night"
+      },
+      "sleep_rem": {
+        "default": "mdi:brain"
+      },
+      "sleep_light": {
+        "default": "mdi:weather-night"
+      },
+      "sleep_awake": {
+        "default": "mdi:eye"
+      },
+      "sleep_score": {
+        "default": "mdi:star-four-points-circle"
+      },
+      "sleep_efficiency": {
+        "default": "mdi:progress-clock"
+      },
+      "sleep_hrv": {
+        "default": "mdi:waveform"
+      },
+      "sleep_spo2": {
+        "default": "mdi:oximeter"
+      },
+      "stress": {
+        "default": "mdi:gauge"
+      },
+      "stress_last": {
+        "default": "mdi:gauge"
+      },
+      "last_activity": {
+        "default": "mdi:sport"
+      },
+      "last_activity_duration": {
+        "default": "mdi:timer"
+      },
+      "last_activity_distance": {
+        "default": "mdi:map-marker-distance"
+      },
+      "last_activity_calories": {
+        "default": "mdi:fire"
+      },
+      "workouts": {
+        "default": "mdi:trophy-outline"
+      },
+      "relogin_in": {
+        "default": "mdi:account-clock"
+      }
+    }
+  }
+}

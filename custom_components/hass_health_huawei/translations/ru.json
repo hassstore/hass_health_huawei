@@ -24,13 +24,122 @@
     "abort": {
       "already_configured": "Этот аккаунт HUAWEI ID уже подключён.",
       "reauth_successful": "Готово: токены обновлены, аккаунт перезапущен.",
-      "unsupported_import": "YAML-конфигурация не поддерживается: добавь аккаунт через интеграции."
+      "wrong_account": "Это другой аккаунт HUAWEI ID. Войди заново под аккаунтом, для которого создана запись, или добавь другой аккаунт отдельной интеграцией."
     },
     "error": {
       "no_code": "В поле нет кода: нужен адрес вида hms://redirect_url?code=... из консоли браузера.",
       "invalid_code": "Huawei отклонил код: он уже использован, истёк или открыт не тот аккаунт. Открой страницу входа заново и повтори.",
       "cannot_connect": "Облако Huawei недоступно. Проверь сеть и попробуй ещё раз.",
       "unknown": "Неизвестная ошибка. Подробности в логе Home Assistant."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "steps": {
+        "name": "Шаги за день"
+      },
+      "distance": {
+        "name": "Дистанция за день"
+      },
+      "calories": {
+        "name": "Калории за день"
+      },
+      "activity_duration": {
+        "name": "Активность за день"
+      },
+      "walking_duration": {
+        "name": "Ходьба за день"
+      },
+      "active_hours": {
+        "name": "Активные часы за день"
+      },
+      "moderate_high_intensity_minutes": {
+        "name": "Интенсивные минуты за день"
+      },
+      "step_goal": {
+        "name": "Цель по шагам"
+      },
+      "resting_heart_rate": {
+        "name": "Пульс покоя"
+      },
+      "heart_rate": {
+        "name": "Пульс"
+      },
+      "max_heart_rate": {
+        "name": "Максимальный пульс за день"
+      },
+      "min_heart_rate": {
+        "name": "Минимальный пульс за день"
+      },
+      "sleep_duration": {
+        "name": "Сон"
+      },
+      "sleep_deep": {
+        "name": "Глубокий сон"
+      },
+      "sleep_rem": {
+        "name": "Сновидения (REM)"
+      },
+      "sleep_light": {
+        "name": "Поверхностный сон"
+      },
+      "sleep_awake": {
+        "name": "Бодрствование во сне"
+      },
+      "sleep_score": {
+        "name": "Оценка сна"
+      },
+      "sleep_efficiency": {
+        "name": "Эффективность сна"
+      },
+      "sleep_hrv": {
+        "name": "ВСР во сне"
+      },
+      "sleep_spo2": {
+        "name": "SpO2 во сне"
+      },
+      "stress": {
+        "name": "Стресс"
+      },
+      "stress_last": {
+        "name": "Стресс (последнее измерение)"
+      },
+      "last_activity": {
+        "name": "Последняя тренировка",
+        "state": {
+          "stairs": "Лестница",
+          "hill": "Холмы / трейл",
+          "cycling": "Велосипед",
+          "running": "Бег",
+          "walking": "Ходьба",
+          "deep_sleep": "Глубокий сон",
+          "light_sleep": "Поверхностный сон",
+          "awake": "Бодрствование",
+          "swimming": "Плавание",
+          "other": "Другое",
+          "unknown": "Неизвестный тип"
+        }
+      },
+      "last_activity_duration": {
+        "name": "Длительность последней тренировки"
+      },
+      "last_activity_distance": {
+        "name": "Дистанция последней тренировки"
+      },
+      "last_activity_calories": {
+        "name": "Калории последней тренировки"
+      },
+      "workouts": {
+        "name": "Тренировок за период"
+      },
+      "relogin_in": {
+        "name": "Повторный вход через, дней"
+      }
+    }
+  },
+  "exceptions": {
+    "no_refresh_token": {
+      "message": "В записи конфигурации нет refresh token. Удали интеграцию и добавь HUAWEI ID заново."
     }
   },
   "options": {
@@ -63,54 +172,6 @@
         "cn": "Китай (материковый)",
         "global": "Глобальный (Европа, Россия, Азия и др.)"
       }
-    }
-  },
-  "entity": {
-    "sensor": {
-      "steps": { "name": "Шаги за день" },
-      "distance": { "name": "Дистанция за день" },
-      "calories": { "name": "Калории за день" },
-      "activity_duration": { "name": "Активность за день" },
-      "walking_duration": { "name": "Ходьба за день" },
-      "active_hours": { "name": "Активные часы за день" },
-      "moderate_high_intensity_minutes": { "name": "Интенсивные минуты за день" },
-      "step_goal": { "name": "Цель по шагам" },
-      "resting_heart_rate": { "name": "Пульс покоя" },
-      "heart_rate": { "name": "Пульс" },
-      "max_heart_rate": { "name": "Максимальный пульс за день" },
-      "min_heart_rate": { "name": "Минимальный пульс за день" },
-      "sleep_duration": { "name": "Сон" },
-      "sleep_deep": { "name": "Глубокий сон" },
-      "sleep_rem": { "name": "Сновидения (REM)" },
-      "sleep_light": { "name": "Поверхностный сон" },
-      "sleep_awake": { "name": "Бодрствование во сне" },
-      "sleep_score": { "name": "Оценка сна" },
-      "sleep_efficiency": { "name": "Эффективность сна" },
-      "sleep_hrv": { "name": "ВСР во сне" },
-      "sleep_spo2": { "name": "SpO2 во сне" },
-      "stress": { "name": "Стресс" },
-      "stress_last": { "name": "Стресс (последнее измерение)" },
-      "last_activity": {
-        "name": "Последняя тренировка",
-        "state": {
-          "stairs": "Лестница",
-          "hill": "Холмы / трейл",
-          "cycling": "Велосипед",
-          "running": "Бег",
-          "walking": "Ходьба",
-          "deep_sleep": "Глубокий сон",
-          "light_sleep": "Поверхностный сон",
-          "awake": "Бодрствование",
-          "swimming": "Плавание",
-          "other": "Другое",
-          "unknown": "Неизвестный тип"
-        }
-      },
-      "last_activity_duration": { "name": "Длительность последней тренировки" },
-      "last_activity_distance": { "name": "Дистанция последней тренировки" },
-      "last_activity_calories": { "name": "Калории последней тренировки" },
-      "workouts": { "name": "Тренировок за период" },
-      "relogin_in": { "name": "Повторный вход через, дней" }
     }
   }
 }

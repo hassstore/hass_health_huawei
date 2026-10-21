@@ -24,13 +24,122 @@
     "abort": {
       "already_configured": "This HUAWEI ID account is already set up.",
       "reauth_successful": "Done: tokens refreshed and the account reloaded.",
-      "unsupported_import": "YAML configuration is not supported: add the account under Integrations."
+      "wrong_account": "That is a different HUAWEI ID. Sign in again with the account this entry was created for, or add the other account as a separate integration."
     },
     "error": {
       "no_code": "No code in that field: paste an address like hms://redirect_url?code=... from the browser console.",
       "invalid_code": "Huawei refused the code: already used, expired, or another account signed in. Open the sign-in page again and repeat.",
       "cannot_connect": "The Huawei cloud could not be reached. Check the network and try again.",
       "unknown": "Unknown error. See the Home Assistant log for details."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "steps": {
+        "name": "Steps today"
+      },
+      "distance": {
+        "name": "Distance today"
+      },
+      "calories": {
+        "name": "Calories today"
+      },
+      "activity_duration": {
+        "name": "Activity today"
+      },
+      "walking_duration": {
+        "name": "Walking today"
+      },
+      "active_hours": {
+        "name": "Active hours today"
+      },
+      "moderate_high_intensity_minutes": {
+        "name": "Moderate-to-vigorous minutes today"
+      },
+      "step_goal": {
+        "name": "Step goal"
+      },
+      "resting_heart_rate": {
+        "name": "Resting heart rate"
+      },
+      "heart_rate": {
+        "name": "Heart rate"
+      },
+      "max_heart_rate": {
+        "name": "Max heart rate today"
+      },
+      "min_heart_rate": {
+        "name": "Min heart rate today"
+      },
+      "sleep_duration": {
+        "name": "Sleep"
+      },
+      "sleep_deep": {
+        "name": "Deep sleep"
+      },
+      "sleep_rem": {
+        "name": "REM sleep"
+      },
+      "sleep_light": {
+        "name": "Light sleep"
+      },
+      "sleep_awake": {
+        "name": "Awake during sleep"
+      },
+      "sleep_score": {
+        "name": "Sleep score"
+      },
+      "sleep_efficiency": {
+        "name": "Sleep efficiency"
+      },
+      "sleep_hrv": {
+        "name": "HRV during sleep"
+      },
+      "sleep_spo2": {
+        "name": "SpO2 during sleep"
+      },
+      "stress": {
+        "name": "Stress"
+      },
+      "stress_last": {
+        "name": "Stress (last measurement)"
+      },
+      "last_activity": {
+        "name": "Last activity",
+        "state": {
+          "stairs": "Stairs",
+          "hill": "Hill / trail",
+          "cycling": "Cycling",
+          "running": "Running",
+          "walking": "Walking",
+          "deep_sleep": "Deep sleep",
+          "light_sleep": "Light sleep",
+          "awake": "Awake",
+          "swimming": "Swimming",
+          "other": "Other",
+          "unknown": "Unknown type"
+        }
+      },
+      "last_activity_duration": {
+        "name": "Last activity duration"
+      },
+      "last_activity_distance": {
+        "name": "Last activity distance"
+      },
+      "last_activity_calories": {
+        "name": "Last activity calories"
+      },
+      "workouts": {
+        "name": "Workouts in period"
+      },
+      "relogin_in": {
+        "name": "Re-login due in days"
+      }
+    }
+  },
+  "exceptions": {
+    "no_refresh_token": {
+      "message": "This config entry has no refresh token stored. Remove the integration and add the HUAWEI ID again."
     }
   },
   "options": {
@@ -63,54 +172,6 @@
         "cn": "China (mainland)",
         "global": "Global (Europe, Russia, Asia, others)"
       }
-    }
-  },
-  "entity": {
-    "sensor": {
-      "steps": { "name": "Steps today" },
-      "distance": { "name": "Distance today" },
-      "calories": { "name": "Calories today" },
-      "activity_duration": { "name": "Activity today" },
-      "walking_duration": { "name": "Walking today" },
-      "active_hours": { "name": "Active hours today" },
-      "moderate_high_intensity_minutes": { "name": "Moderate-to-vigorous minutes today" },
-      "step_goal": { "name": "Step goal" },
-      "resting_heart_rate": { "name": "Resting heart rate" },
-      "heart_rate": { "name": "Heart rate" },
-      "max_heart_rate": { "name": "Max heart rate today" },
-      "min_heart_rate": { "name": "Min heart rate today" },
-      "sleep_duration": { "name": "Sleep" },
-      "sleep_deep": { "name": "Deep sleep" },
-      "sleep_rem": { "name": "REM sleep" },
-      "sleep_light": { "name": "Light sleep" },
-      "sleep_awake": { "name": "Awake during sleep" },
-      "sleep_score": { "name": "Sleep score" },
-      "sleep_efficiency": { "name": "Sleep efficiency" },
-      "sleep_hrv": { "name": "HRV during sleep" },
-      "sleep_spo2": { "name": "SpO2 during sleep" },
-      "stress": { "name": "Stress" },
-      "stress_last": { "name": "Stress (last measurement)" },
-      "last_activity": {
-        "name": "Last activity",
-        "state": {
-          "stairs": "Stairs",
-          "hill": "Hill / trail",
-          "cycling": "Cycling",
-          "running": "Running",
-          "walking": "Walking",
-          "deep_sleep": "Deep sleep",
-          "light_sleep": "Light sleep",
-          "awake": "Awake",
-          "swimming": "Swimming",
-          "other": "Other",
-          "unknown": "Unknown type"
-        }
-      },
-      "last_activity_duration": { "name": "Last activity duration" },
-      "last_activity_distance": { "name": "Last activity distance" },
-      "last_activity_calories": { "name": "Last activity calories" },
-      "workouts": { "name": "Workouts in period" },
-      "relogin_in": { "name": "Re-login due in days" }
     }
   }
 }

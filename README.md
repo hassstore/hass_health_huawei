@@ -25,7 +25,8 @@ HUAWEI ID 账号，每 180 天用浏览器登录一次即可。支持多账号�
 
 ## 要求
 
-- Home Assistant **2024.12** 或更新版本
+- Home Assistant **2025.8** 或更新版本（集成使用 `OptionsFlowWithReload`，
+  该 API 自 2025.8 起提供）
 - 一个已同步过数据的 HUAWEI ID 账号（运动健康 App 至少上传过一次）
 - 一台带浏览器的电脑（Chrome/Chromium 或 Firefox），用于首次登录
 - 无 PyPI 依赖，仅使用 Python 标准库
@@ -55,7 +56,8 @@ HUAWEI ID 账号，每 180 天用浏览器登录一次即可。支持多账号�
 - **中国大陆**：账号在中国区创建或用 `cloud.huawei.com.cn` 登录
 - **国际版**：欧洲、俄罗斯、亚太等所有其他账号
 
-选错的表现是登录时报"账号不存在"，返回重选即可。
+选错的表现是登录时报"账号不存在"。HA 的配置对话框没有"返回上一步"，所以关掉
+对话框后重新"添加集成"，这一次选另一个区域即可（此时还没有创建任何条目）。
 
 ### 第 2 步：打开登录链接（必须用移动设备模式）
 
@@ -164,7 +166,8 @@ Failed to launch 'hms://redirect_url?code=...' because the scheme does not have 
 | 提示重新登录（`20020003`） | refresh token 满 180 天，点"重新配置"重走登录 |
 | `already_configured` | 账号已存在，走 reauth 更新令牌即可 |
 | `30005 Invalid device` | deviceCode 属于别的账号，重置为 0 |
-| 所有传感器 `unknown` | 打开调试日志看原因：`homeassistant.components.hass_health_huawei: debug` |
+| 所有传感器 `unknown` | 打开调试日志看原因：`custom_components.hass_health_huawei: debug` |
+| 需要把数据发给维护者 | 设备页 → ⋯ → **下载诊断信息**：令牌已脱敏，只含区域、令牌到期时间与快照统计 |
 
 ## 安全须知
 
@@ -176,6 +179,8 @@ Failed to launch 'hms://redirect_url?code=...' because the scheme does not have 
 
 ## 开发与发布
 
+- 测试：`pip install pytest-homeassistant-custom-component && pytest`
+  （覆盖 config flow 全部错误分支 / reauth / options / 实体与图标 / 诊断脱敏）
 - `client.py` 零 HA 依赖，可直接 `python3` 驱动调试
 - 推送 `vX.Y.Z` tag（与 `manifest.json` 版本一致）由
   [release.yml](https://github.com/hassstore/hass_health_huawei/blob/main/.github/workflows/release.yml) 自动打包 `hass_health_huawei.zip`

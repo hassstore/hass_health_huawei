@@ -1,4 +1,4 @@
-"""渲染 512x512 透明背景 PNG 品牌图标：红色爱心 + 白色心电图线。
+"""渲染 256x256（icon.png）与 512x512（icon@2x.png）透明背景 PNG 品牌图标：红色爱心 + 白色心电图线。
 
 纯标准库实现（zlib + struct）：机器上没有 Pillow，pip 又被 PEP 668 锁死。
 """
@@ -7,7 +7,8 @@ import math
 import struct
 import zlib
 
-SIZE = 512
+ICON_SIZE = 256
+ICON_2X_SIZE = 512
 SS = 3  # 边缘抗锯齿的超采样倍数
 RED = (0xC7, 0x00, 0x0B)
 WHITE = (0xFF, 0xFF, 0xFF)
@@ -47,16 +48,16 @@ def sample(u, v):
     return RED
 
 
-def render():
+def render(size: int):
     rows = []
-    for py in range(SIZE):
+    for py in range(size):
         row = bytearray()
-        for px in range(SIZE):
-            red = white = hit = 0
+        for px in range(size):
+            white = hit = 0
             for sy in range(SS):
                 for sx in range(SS):
-                    u = (px + (sx + 0.5) / SS) / SIZE
-                    v = (py + (sy + 0.5) / SS) / SIZE
+                    u = (px + (sx + 0.5) / SS) / size
+                    v = (py + (sy + 0.5) / SS) / size
                     colour = sample(u, v)
                     if colour is None:
                         continue
@@ -76,7 +77,7 @@ def render():
     return rows
 
 
-def png(path, rows):
+def png(path, rows, size: int):
     raw = b"".join(b"\x00" + row for row in rows)
 
     def chunk(tag, data):
@@ -86,12 +87,24 @@ def png(path, rows):
 
     with open(path, "wb") as fh:
         fh.write(b"\x89PNG\r\n\x1a\n")
-        fh.write(chunk(b"IHDR", struct.pack(">IIBBBBB", SIZE, SIZE, 8, 6, 0, 0, 0)))
+        fh.write(chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0)))
         fh.write(chunk(b"IDAT", zlib.compress(raw, 9)))
         fh.write(chunk(b"IEND", b""))
 
 
 if __name__ == "__main__":
     import sys
-    png(sys.argv[1] if len(sys.argv) > 1 else "icon.png", render())
-    print("wrote", sys.argv[1] if len(sys.argv) > 1 else "icon.png")
+    from pathlib import Path
+
+    out_dir = (
+        Path(sys.argv[1])
+        if len(sys.argv) > 1
+        else Path(__file__).resolve().parent.parent
+        / "custom_components"
+        / "hass_health_huawei"
+        / "brand"
+    )
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for name, size in (("icon.png", ICON_SIZE), ("icon@2x.png", ICON_2X_SIZE)):
+        png(out_dir / name, render(size), size)
+        print("wrote", out_dir / name)

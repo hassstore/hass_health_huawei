@@ -27,6 +27,7 @@ from .const import (
     CONF_SITE_ID,
     CONF_TOKEN_TYPE,
     CONF_UID,
+    DOMAIN,
     PLATFORMS,
     TOKEN_TYPE,
 )
@@ -34,22 +35,28 @@ from .coordinator import HuaweiHealthCoordinator, HuaweiHealthData
 
 _LOGGER = logging.getLogger(__name__)
 
+type HuaweiHealthConfigEntry = ConfigEntry[HuaweiHealthData]
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+
+async def async_setup_entry(
+        hass: HomeAssistant, entry: HuaweiHealthConfigEntry) -> bool:
     """构建 client，验证凭据可用，然后交给各 platform。"""
     if not entry.data.get(CONF_REFRESH_TOKEN):
-        raise ConfigEntryError("Config entry carries no refresh token; re-add the account")
+        raise ConfigEntryError(
+            translation_domain=DOMAIN,
+            translation_key="no_refresh_token",
+        )
 
     data = _build(hass, entry)
     await data.coordinator.async_config_entry_first_refresh()
 
     entry.runtime_data = data
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    entry.async_on_unload(entry.add_update_listener(_async_entry_updated))
     return True
 
 
-def _build(hass: HomeAssistant, entry: ConfigEntry) -> HuaweiHealthData:
+def _build(hass: HomeAssistant,
+           entry: HuaweiHealthConfigEntry) -> HuaweiHealthData:
     tokens = Tokens(
         access_token=entry.data.get(CONF_ACCESS_TOKEN),
         refresh_token=entry.data.get(CONF_REFRESH_TOKEN),
@@ -71,10 +78,11 @@ def _build(hass: HomeAssistant, entry: ConfigEntry) -> HuaweiHealthData:
     )
     coordinator = HuaweiHealthCoordinator(hass, entry, client, tokens)
     return HuaweiHealthData(entry=entry, client=client, tokens=tokens,
-                            coordinator=coordinator, options=dict(entry.options))
+                            coordinator=coordinator)
 
 
-def _schedule_save(hass: HomeAssistant, entry: ConfigEntry, tokens: Tokens) -> None:
+def _schedule_save(hass: HomeAssistant, entry: HuaweiHealthConfigEntry,
+                   tokens: Tokens) -> None:
     """从执行轮换的任意线程持久化新的 token 对。
 
     轮换会在服务端使旧的 access token 失效，所以丢失这次写入就意味着
@@ -84,7 +92,8 @@ def _schedule_save(hass: HomeAssistant, entry: ConfigEntry, tokens: Tokens) -> N
 
 
 @callback
-def _save_tokens(hass: HomeAssistant, entry: ConfigEntry, tokens: Tokens) -> None:
+def _save_tokens(hass: HomeAssistant, entry: HuaweiHealthConfigEntry,
+                 tokens: Tokens) -> None:
     hass.config_entries.async_update_entry(
         entry,
         data={
@@ -101,16 +110,8 @@ def _save_tokens(hass: HomeAssistant, entry: ConfigEntry, tokens: Tokens) -> Non
     _LOGGER.debug("Stored the rotated Huawei Health token for %s", entry.title)
 
 
-@callback
-def _async_entry_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """仅在 options 变化时 reload —— token 保存也会落到同一个 listener 上。"""
-    data: HuaweiHealthData | None = getattr(entry, "runtime_data", None)
-    if data is None or dict(entry.options) == data.options:
-        return
-    hass.async_create_task(hass.config_entries.async_reload(entry.entry_id))
-
-
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(
+        hass: HomeAssistant, entry: HuaweiHealthConfigEntry) -> bool:
     if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         return False
     entry.runtime_data = None

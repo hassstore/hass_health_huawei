@@ -23,7 +23,7 @@ import urllib.parse
 import urllib.request
 import uuid
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone, tzinfo
 from typing import Any, Callable, Iterable, Iterator
 
 from .const import (
@@ -116,8 +116,12 @@ def to_int(value: Any) -> int | None:
     return None if got is None else int(got)
 
 
-def normalize_day(raw: Any) -> date | None:
-    """华为在不同端点混用 YYYYMMDD 整数、ISO 字符串和毫秒/纳秒 epoch。"""
+def normalize_day(raw: Any, tz: tzinfo | None = None) -> date | None:
+    """华为在不同端点混用 YYYYMMDD 整数、ISO 字符串和毫秒/纳秒 epoch。
+
+    ``tz`` 只在 epoch 分支用到：云端按用户本地日期归档，而进程时区通常是 UTC，
+    因此调用方（coordinator）会传入 Home Assistant 配置的时区。
+    """
     if isinstance(raw, str) and "-" in raw:
         digits = "".join(ch for ch in raw if ch.isdigit())
         return _from_ymd(digits[:8]) if len(digits) >= 8 else None
@@ -128,11 +132,11 @@ def normalize_day(raw: Any) -> date | None:
     if len(text) == 8:
         return _from_ymd(text)
     if len(text) == 13:
-        return datetime.fromtimestamp(value / 1000).date()
+        return datetime.fromtimestamp(value / 1000, tz=tz).date()
     if len(text) == 10:
-        return datetime.fromtimestamp(value).date()
+        return datetime.fromtimestamp(value, tz=tz).date()
     if len(text) == 19:
-        return datetime.fromtimestamp(value / 1e9).date()
+        return datetime.fromtimestamp(value / 1e9, tz=tz).date()
     return None
 
 
@@ -656,39 +660,49 @@ class HuaweiHealthClient:
         return records
 
     # ── 成型读取 ─────────────────────────────────────────────────────────
-    def daily_summary(self, days: int = 3) -> list[dict]:
+    # ``today`` 由调用方（coordinator）按 Home Assistant 配置的时区传入——
+    # 云端按用户本地日期归档，而 executor 线程里的系统时区往往就是 UTC。
+    # 本模块不 import homeassistant，独立调试时退回系统本地日期。
+    def daily_summary(self, days: int = 3, *, today: date | None = None,
+                      tz: tzinfo | None = None) -> list[dict]:
         """账号每日活动按 (day, sportType) 每天每类型一行。"""
-        end = day_int(date.today())
-        start = day_int(date.today() - timedelta(days=max(days, 1) - 1))
+        end_day = today or date.today()
+        end = day_int(end_day)
+        start = day_int(end_day - timedelta(days=max(days, 1) - 1))
         response = self.sports_stat(start, end)
-        return daily_activity(response.get("sportStat") or [])
+        return daily_activity(response.get("sportStat") or [], tz)
 
-    def sessions(self, days: int = 7) -> list[dict]:
+    def sessions(self, days: int = 7, *,
+                 today: date | None = None) -> list[dict]:
         """已记录的运动，由云端存储的按分钟分段重建而来。"""
-        end = day_int(date.today())
-        start = day_int(date.today() - timedelta(days=max(days, 1) - 1))
+        end_day = today or date.today()
+        end = day_int(end_day)
+        start = day_int(end_day - timedelta(days=max(days, 1) - 1))
         records = self._by_time_range(
             lambda a, b: self.sports_detail(a, b, SESSION_SPORT_TYPES), start, end)
         return sport_sessions(records)
 
     def health_summary(self, days: int = 3,
-                       types: Iterable[int] = (7, 9, 11, 12)) -> list[dict]:
-        end = day_int(date.today())
-        start = day_int(date.today() - timedelta(days=max(days, 1) - 1))
+                       types: Iterable[int] = (7, 9, 11, 12), *,
+                       today: date | None = None,
+                       tz: tzinfo | None = None) -> list[dict]:
+        end_day = today or date.today()
+        end = day_int(end_day)
+        start = day_int(end_day - timedelta(days=max(days, 1) - 1))
         response = self.health_stat(start, end, types=types)
-        return health_series(response)
+        return health_series(response, tz)
 
 
 # ── 响应整形 ────────────────────────────────────────────────────────────
 
 
-def daily_activity(rows: Iterable[dict]) -> list[dict]:
+def daily_activity(rows: Iterable[dict], tz: tzinfo | None = None) -> list[dict]:
     """getSportsStat/getSportsDimenStat 响应中每个 recordDay 对应一行。"""
     out = []
     for record in rows:
         if not isinstance(record, dict):
             continue
-        day = normalize_day(record.get("recordDay"))
+        day = normalize_day(record.get("recordDay"), tz)
         if not day:
             continue
         basic = record.get("sportBasicInfo") or {}
@@ -765,14 +779,14 @@ HEALTH_FAMILIES = {
 }
 
 
-def health_series(payload: dict) -> list[dict]:
+def health_series(payload: dict, tz: tzinfo | None = None) -> list[dict]:
     """按天的健康指标，指标族取决于账号设备实际上报了哪些。"""
     rows: dict[str, dict] = {}
     for family, (block, fields) in HEALTH_FAMILIES.items():
         for record in payload.get(family) or []:
             if not isinstance(record, dict):
                 continue
-            day = normalize_day(record.get("recordDay"))
+            day = normalize_day(record.get("recordDay"), tz)
             values = record.get(block) or {}
             if not day or not isinstance(values, dict):
                 continue
@@ -788,8 +802,8 @@ def health_series(payload: dict) -> list[dict]:
                                   ("wakeupTime", "wakeup")):
                     stamp = to_float(values.get(key))
                     if stamp and stamp > 1e12:
-                        row[name] = datetime.fromtimestamp(stamp / 1000).strftime(
-                            "%Y-%m-%d %H:%M")
+                        row[name] = datetime.fromtimestamp(
+                            stamp / 1000, tz=tz).strftime("%Y-%m-%d %H:%M")
     return [rows[key] for key in sorted(rows)]
 
 
@@ -852,6 +866,7 @@ def sport_sessions(records: Iterable[dict], gap_minutes: int = 15) -> list[dict]
 
 
 def _stamp(ms: float | None) -> datetime | None:
+    """云端时间戳是 epoch 毫秒；返回带 UTC 时区的 datetime，交给展示层换时区。"""
     if not ms:
         return None
-    return datetime.fromtimestamp(ms / 1000)
+    return datetime.fromtimestamp(ms / 1000, tz=timezone.utc)

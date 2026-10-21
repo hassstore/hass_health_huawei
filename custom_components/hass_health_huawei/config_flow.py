@@ -16,10 +16,13 @@ from typing import Any
 
 import voluptuous as vol
 
-from homeassistant import config_entries
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlowWithReload,
+)
 from homeassistant.core import callback
-from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.selector import (
     SelectSelector,
@@ -97,7 +100,7 @@ def _entry_data(tokens: Tokens, region: str) -> dict[str, Any]:
     }
 
 
-class HuaweiHealthConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class HuaweiHealthConfigFlow(ConfigFlow, domain=DOMAIN):
     """处理浏览器辅助登录：新账号配置或重新授权。"""
 
     VERSION = 1
@@ -105,7 +108,7 @@ class HuaweiHealthConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         self._region: str = DEFAULT_REGION
         self._authorize_url: str = ""
-        self._entry_id: str | None = None
+        self._reauth_entry: ConfigEntry | None = None
         self._uid: str | None = None
 
     @staticmethod
@@ -116,7 +119,7 @@ class HuaweiHealthConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     # ── 新账号 ──────────────────────────────────────────────────────────
     async def async_step_user(
-            self, user_input: dict[str, Any] | None = None) -> FlowResult:
+            self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """先选云区域——它决定登录走哪个 OAuth 域名。"""
         if user_input is not None:
             self._region = str(user_input[CONF_REGION])
@@ -124,7 +127,7 @@ class HuaweiHealthConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(step_id="user", data_schema=_REGION_SCHEMA)
 
     async def async_step_login(
-            self, user_input: dict[str, Any] | None = None) -> FlowResult:
+            self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """唯一能自动化的环节就是生成这个 URL。"""
         if user_input is not None:
             return await self.async_step_code()
@@ -133,7 +136,7 @@ class HuaweiHealthConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="login", description_placeholders=_placeholders(self._authorize_url))
 
     async def async_step_code(
-            self, user_input: dict[str, Any] | None = None) -> FlowResult:
+            self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """把粘贴的地址兑换成令牌对。"""
         errors: dict[str, str] = {}
         if user_input is not None:
@@ -161,13 +164,21 @@ class HuaweiHealthConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="code", data_schema=_CODE_SCHEMA, errors=errors,
             description_placeholders=_placeholders(self._authorize_url))
 
-    async def _finish(self, tokens: Tokens) -> FlowResult:
+    async def _finish(self, tokens: Tokens) -> ConfigFlowResult:
+        """把令牌对写回正在重新授权的条目，或为账号新建一条。"""
         data = _entry_data(tokens, self._region)
-        if self._entry_id:
-            entry = self.hass.config_entries.async_get_entry(self._entry_id)
-            if entry is not None:
-                return self.async_update_reload_and_abort(
-                    entry, data_updates=data, unique_id=tokens.uid or entry.unique_id)
+
+        if (entry := self._reauth_entry) is not None:
+            await self.async_set_unique_id(tokens.uid or entry.unique_id)
+            # 换了 HUAWEI ID 就不能写回原条目，否则两个账号会争同一个 unique_id。
+            self._abort_if_unique_id_mismatch(reason="wrong_account")
+            # token 轮换响应偶尔不带 uid/siteId，别用 None 覆盖已存的值。
+            merged = {**entry.data,
+                      **{key: value for key, value in data.items()
+                         if value is not None}}
+            return self.async_update_reload_and_abort(
+                entry, data_updates=merged)
+
         unique_id = tokens.uid or hashlib.sha256(
             (tokens.access_token or "").encode()).hexdigest()[:16]
         await self.async_set_unique_id(unique_id)
@@ -180,28 +191,24 @@ class HuaweiHealthConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     # ── 重新授权 ──────────────────────────────────────────────────────────
     async def async_step_reauth(
-            self, entry_data: dict[str, Any]) -> FlowResult:
+            self, entry_data: dict[str, Any]) -> ConfigFlowResult:
         """refresh token 失效（华为的 180 天到期，或账号已退出登录）。"""
-        self._entry_id = self.context.get("entry_id")
+        self._reauth_entry = self._get_reauth_entry()
         self._uid = entry_data.get(CONF_UID)
         self._region = str(entry_data.get(CONF_REGION) or DEFAULT_REGION)
         return await self.async_step_reauth_confirm()
 
     async def async_step_reauth_confirm(
-            self, user_input: dict[str, Any] | None = None) -> FlowResult:
+            self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
             return await self.async_step_code()
         self._authorize_url = authorization_url(region=self._region)
-        entry = self.hass.config_entries.async_get_entry(self._entry_id or "")
+        entry = self._reauth_entry
         return self.async_show_form(
             step_id="reauth_confirm",
             description_placeholders=dict(
                 _placeholders(self._authorize_url),
                 account=entry.title if entry else ""))
-
-    # ── YAML 导入（本集成不支持 YAML 配置） ─────────────────────────────
-    async def async_step_import(self, import_data: dict[str, Any]) -> FlowResult:
-        return self.async_abort(reason="unsupported_import")
 
 
 def _profile_name(access_token: str | None, session_host: str | None,
@@ -219,11 +226,15 @@ def _profile_name(access_token: str | None, session_host: str | None,
     return str(name) if name else None
 
 
-class HuaweiHealthOptionsFlow(config_entries.OptionsFlow):
-    """按账号调优：轮询频率与回溯天数。"""
+class HuaweiHealthOptionsFlow(OptionsFlowWithReload):
+    """按账号调优：轮询频率与回溯天数。
+
+    继承 OptionsFlowWithReload：选项保存后由 HA 负责重载该条目，
+    因此集成不再注册 update listener（两者同时使用会被 HA 拒绝）。
+    """
 
     async def async_step_init(
-            self, user_input: dict[str, Any] | None = None) -> FlowResult:
+            self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
             options = {
                 CONF_UPDATE_INTERVAL: int(user_input[CONF_UPDATE_INTERVAL]),

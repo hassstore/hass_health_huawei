@@ -24,13 +24,122 @@
     "abort": {
       "already_configured": "该 HUAWEI ID 账号已配置。",
       "reauth_successful": "完成：令牌已刷新，账号已重新加载。",
-      "unsupported_import": "不支持 YAML 配置：请通过“集成”添加账号。"
+      "wrong_account": "登录的是另一个 HUAWEI ID。请用创建本条目时的账号重新登录，或把另一个账号单独添加为一条集成。"
     },
     "error": {
       "no_code": "输入内容中没有 code：请粘贴浏览器控制台中形如 hms://redirect_url?code=... 的地址。",
       "invalid_code": "华为拒绝了该 code：已被使用、已过期，或登录的是其他账号。请重新打开登录页面并重试。",
       "cannot_connect": "无法连接华为云。请检查网络后重试。",
       "unknown": "未知错误。详情请查看 Home Assistant 日志。"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "steps": {
+        "name": "今日步数"
+      },
+      "distance": {
+        "name": "今日距离"
+      },
+      "calories": {
+        "name": "今日热量"
+      },
+      "activity_duration": {
+        "name": "今日活动时长"
+      },
+      "walking_duration": {
+        "name": "今日步行时长"
+      },
+      "active_hours": {
+        "name": "今日活动小时数"
+      },
+      "moderate_high_intensity_minutes": {
+        "name": "今日中高强度分钟数"
+      },
+      "step_goal": {
+        "name": "步数目标"
+      },
+      "resting_heart_rate": {
+        "name": "静息心率"
+      },
+      "heart_rate": {
+        "name": "心率"
+      },
+      "max_heart_rate": {
+        "name": "今日最高心率"
+      },
+      "min_heart_rate": {
+        "name": "今日最低心率"
+      },
+      "sleep_duration": {
+        "name": "睡眠时长"
+      },
+      "sleep_deep": {
+        "name": "深睡眠"
+      },
+      "sleep_rem": {
+        "name": "快速眼动（REM）"
+      },
+      "sleep_light": {
+        "name": "浅睡眠"
+      },
+      "sleep_awake": {
+        "name": "睡眠中清醒"
+      },
+      "sleep_score": {
+        "name": "睡眠得分"
+      },
+      "sleep_efficiency": {
+        "name": "睡眠效率"
+      },
+      "sleep_hrv": {
+        "name": "睡眠 HRV"
+      },
+      "sleep_spo2": {
+        "name": "睡眠血氧"
+      },
+      "stress": {
+        "name": "压力"
+      },
+      "stress_last": {
+        "name": "压力（最近一次测量）"
+      },
+      "last_activity": {
+        "name": "最近运动",
+        "state": {
+          "stairs": "爬楼",
+          "hill": "登山 / 越野",
+          "cycling": "骑行",
+          "running": "跑步",
+          "walking": "步行",
+          "deep_sleep": "深睡眠",
+          "light_sleep": "浅睡眠",
+          "awake": "清醒",
+          "swimming": "游泳",
+          "other": "其他",
+          "unknown": "未知类型"
+        }
+      },
+      "last_activity_duration": {
+        "name": "最近运动时长"
+      },
+      "last_activity_distance": {
+        "name": "最近运动距离"
+      },
+      "last_activity_calories": {
+        "name": "最近运动热量"
+      },
+      "workouts": {
+        "name": "周期内运动次数"
+      },
+      "relogin_in": {
+        "name": "距需重新登录（天）"
+      }
+    }
+  },
+  "exceptions": {
+    "no_refresh_token": {
+      "message": "该配置条目没有保存 refresh token。请删除这条集成后重新添加 HUAWEI ID。"
     }
   },
   "options": {
@@ -63,54 +172,6 @@
         "cn": "中国大陆",
         "global": "国际版（欧洲、俄罗斯、亚太等）"
       }
-    }
-  },
-  "entity": {
-    "sensor": {
-      "steps": { "name": "今日步数" },
-      "distance": { "name": "今日距离" },
-      "calories": { "name": "今日热量" },
-      "activity_duration": { "name": "今日活动时长" },
-      "walking_duration": { "name": "今日步行时长" },
-      "active_hours": { "name": "今日活动小时数" },
-      "moderate_high_intensity_minutes": { "name": "今日中高强度分钟数" },
-      "step_goal": { "name": "步数目标" },
-      "resting_heart_rate": { "name": "静息心率" },
-      "heart_rate": { "name": "心率" },
-      "max_heart_rate": { "name": "今日最高心率" },
-      "min_heart_rate": { "name": "今日最低心率" },
-      "sleep_duration": { "name": "睡眠时长" },
-      "sleep_deep": { "name": "深睡眠" },
-      "sleep_rem": { "name": "快速眼动（REM）" },
-      "sleep_light": { "name": "浅睡眠" },
-      "sleep_awake": { "name": "睡眠中清醒" },
-      "sleep_score": { "name": "睡眠得分" },
-      "sleep_efficiency": { "name": "睡眠效率" },
-      "sleep_hrv": { "name": "睡眠 HRV" },
-      "sleep_spo2": { "name": "睡眠血氧" },
-      "stress": { "name": "压力" },
-      "stress_last": { "name": "压力（最近一次测量）" },
-      "last_activity": {
-        "name": "最近运动",
-        "state": {
-          "stairs": "爬楼",
-          "hill": "登山 / 越野",
-          "cycling": "骑行",
-          "running": "跑步",
-          "walking": "步行",
-          "deep_sleep": "深睡眠",
-          "light_sleep": "浅睡眠",
-          "awake": "清醒",
-          "swimming": "游泳",
-          "other": "其他",
-          "unknown": "未知类型"
-        }
-      },
-      "last_activity_duration": { "name": "最近运动时长" },
-      "last_activity_distance": { "name": "最近运动距离" },
-      "last_activity_calories": { "name": "最近运动热量" },
-      "workouts": { "name": "周期内运动次数" },
-      "relogin_in": { "name": "距需重新登录（天）" }
     }
   }
 }
